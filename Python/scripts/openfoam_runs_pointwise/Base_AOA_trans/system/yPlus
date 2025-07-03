@@ -1,0 +1,16 @@
+yPlus
+{
+    // Mandatory entries (unmodifiable)
+    type            yPlus;
+    libs            (fieldFunctionObjects);
+
+    // Optional entries
+    useWallFunction true;
+
+    // Optional (inherited) entries
+    writeControl    timeStep;
+    writeInterval   1;               // Output every timestep
+    writePrecision  16;              // High precision
+    writeToFile     true;            // Ensure writing to file is enabled
+    useUserTime     true;
+}

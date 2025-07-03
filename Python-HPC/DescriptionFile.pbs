@@ -1,0 +1,131 @@
+#!/bin/bash
+#PBS -N LEI_profile
+#PBS -l walltime=72:00:00
+#PBS -l nodes=10:ppn=20:typeiMP
+#PBS -q fpt-medium
+#PBS -o output_file.out
+#PBS -e error_file.err
+#PBS -m abe
+#PBS -M person@mail.com
+
+##################
+# Change max jobs per node #
+##################
+max_jobs_per_node=20
+
+
+# HPC12 commands #
+##################
+
+# Record start time
+start_time=$(date +%s)
+
+# Load bashrc commands
+source /home/<person>/.bashrc
+
+# Changes directory to the current working directory of the qsub (submit job) command
+cd $PBS_O_WORKDIR
+echo "Working directory:" $PBS_O_WORKDIR
+base_dir=$(pwd)
+
+
+#####################
+# OpenFOAM Commands #
+#####################
+
+echo "Copying all Re/AOA folder into each profile directory"
+for profile in ./OF_Uploads/*/
+do
+    # Copy all AOA_ folder to profile dic
+    cp -r ./OF_Ref/Re_* "$profile"
+done
+echo "Copying all Re/AOA folder complete."
+
+
+# Get unique node names from PBS_NODEFILE
+nodes=($(sort -u $PBS_NODEFILE))
+echo "Available nodes: ${nodes[@]}"
+
+# Create an associative array to track tasks per node.
+declare -A node_count
+for node in "${nodes[@]}"; do
+    node_count["$node"]=0
+done
+
+# Create an associative array to map background job PIDs to the node they’re running on.
+declare -A job_node
+
+# Function: update job counts for tasks that have finished.
+update_jobs() {
+    for pid in "${!job_node[@]}"; do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            finished_node="${job_node[$pid]}"
+            node_count["$finished_node"]=$(( node_count["$finished_node"] - 1 ))
+            unset job_node["$pid"]
+        fi
+    done
+}
+
+# Loop over each profile
+for profile_alpha in ./OF_Uploads/*/Re_*/AOA_*/; do
+    # Wait until at least one node has a free slot (less than max_jobs_per_node tasks)
+    while true; do
+        update_jobs
+        allocated_node=""
+        for node in "${nodes[@]}"; do
+            if [ "${node_count[$node]}" -lt "$max_jobs_per_node" ]; then
+                allocated_node=$node
+                break
+            fi
+        done
+        if [ -n "$allocated_node" ]; then
+            break
+        fi
+        sleep 2
+    done
+
+    echo "Launching task for $profile_alpha on node $allocated_node"
+  rsh "$allocated_node" "cd $PBS_O_WORKDIR && \
+      source /home/<person>/.bashrc && \
+      module load mpi/openmpi-4.1.2 && \
+      module load openfoam/v2006 && \
+      cp -r \"$profile_alpha/../../polyMesh\" \"$profile_alpha/constant\" && \
+      renumberMesh -case $profile_alpha > $profile_alpha/log.renumberMesh && \
+      checkMesh -case $profile_alpha > $profile_alpha/log.checkMesh && \
+      simpleFoam -case $profile_alpha > $profile_alpha/log.simpleFoam && \
+      cd \"$profile_alpha\" && python3 \"$base_dir/OF_Ref/PostProcess.py\" ." &
+
+
+    pid=$!
+    job_node["$pid"]=$allocated_node
+    node_count["$allocated_node"]=$(( node_count["$allocated_node"] + 1 ))
+done
+wait
+
+
+echo "Sequential appending config results for each AOA"
+for profile in ./OF_Uploads/*/
+do
+    (
+      cd "$profile" && python3 "$base_dir/OF_Ref/Append_Results.py" .
+    )
+done
+echo "Append data complete"
+
+
+echo "Sort polar data for config and AOA"
+cd "$base_dir/OF_Results" && python3 "$base_dir/OF_Ref/polar_sort.py"
+echo "Sort polar data complete"
+
+
+# Calculate total run
+end_time=$(date +%s)
+runtime=$((end_time - start_time))
+hours=$(( runtime / 3600 ))
+minutes=$(( (runtime % 3600) / 60 ))
+seconds=$(( runtime % 60 ))
+echo "Runtime: ${hours} hours, ${minutes} minutes, ${seconds} seconds"
+
+
+# Shows date and time of job termination
+echo "Job terminated on " $(date)

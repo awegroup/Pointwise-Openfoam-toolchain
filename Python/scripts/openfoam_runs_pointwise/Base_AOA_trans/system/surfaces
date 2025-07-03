@@ -1,0 +1,22 @@
+surfaces
+{
+    type            surfaces;
+    libs            (sampling);
+    writeControl    timeStep;        // timeStep
+    writeInterval   1;               // Output every timestep
+    fields          (p wallShearStress);
+    surfaceFormat   raw;             // Specify the format
+    writePrecision  16;              // High precision
+    writeToFile     true;            // Ensure writing to file is enabled
+    useUserTime     true;
+
+    surfaces
+    {
+        airfoilSurface
+        {
+            type        patch;
+            patches     ("airfoil"); // Replace with your patch name
+            interpolate true;
+        }
+    }
+}

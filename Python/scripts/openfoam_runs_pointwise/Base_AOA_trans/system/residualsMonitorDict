@@ -1,0 +1,11 @@
+// Residuals monitoring configuration for OpenFOAM
+
+solverInfo
+{
+    type            solverInfo;
+    libs            ("libutilityFunctionObjects.so");  // Ensure the library is loaded
+    fields          (U p k omega);  // Fields for which residuals are monitored (U = velocity, p = pressure, k = turbulence)
+    log             true;   // Enable logging of residuals
+    writeToFile     true;   // Write residuals to file
+    writeInterval   1;      // Write residuals every timestep
+}
