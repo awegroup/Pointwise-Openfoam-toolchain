@@ -447,7 +447,7 @@ def compute_alpha_pointwise(Re, alpha, previous_alpha, root_path, profile_name):
     force_coeffs_path = "openfoam_runs_pointwise/AOA_" + str(alpha) + "/postProcessing/forceCoeffs/1/coefficient.dat"
     residuals_path = "openfoam_runs_pointwise/AOA_" + str(alpha) + "/postProcessing/solverInfo/1/solverInfo.dat"
     yplus_path = "openfoam_runs_pointwise/AOA_" + str(alpha) + "/postProcessing/yPlus/" + str(int(iteration[-1])) + "/yPlus.dat"
-    output_file = root_path + "/results/polar_pw.dat"
+    output_file = root_path + "/results/polar.dat"
 
     # Define the header row
     header = "# Alpha Cd Cs Cl CmRoll CmPitch CmYaw Cd(f) Cd(r) Cs(f) Cs(r) Cl(f) Cl(r) xcp Ux_final Uy_final k_final p_final omega_final Cl_res Cd_res Cm_res yplus iter_n"
