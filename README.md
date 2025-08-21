@@ -2,6 +2,8 @@
 
 The toolchain automatically meshes parametrized 2D Leading-Edge Inflatable (LEI) kite profiles and creates the required directory infrastructure for subsequent CFD simulations.
 
+![](docs/lei-airfoil-shape-parametrization.mp4)
+
 The 2D meshes are generated in Pointwise with O-grid topology. The directory infrastructure is set up for OpenFOAM cases with different angles of attack (AoA).
 
 
