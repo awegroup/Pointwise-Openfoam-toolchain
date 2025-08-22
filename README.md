@@ -20,7 +20,7 @@ The 2D meshes are generated in Pointwise with O-grid topology. The directory inf
 
 ## Authors
 
-John Watchorn
+[John Watchorn](https://github.com/sjonvanni)
 
 [Kasper Masure](https://github.com/kaspermasure)
 
